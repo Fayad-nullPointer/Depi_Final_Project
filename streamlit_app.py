@@ -118,7 +118,8 @@ else:
             st.stop()
     else:
         # Sample data option for demonstration
-        if st.sidebar.button("Use sample data (for demo only)"):
+        use_sample_data = st.sidebar.button("Use sample data (for demo only)")
+        if use_sample_data:
             df = create_sample_data()
             st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
         else:
@@ -671,7 +672,7 @@ elif selected_page == "ARIMA Forecasting":
                 
                 ax.set_xlabel('Date')
                 ax.set_ylabel('Sales')
-                ax.set_title(f'ARIMA Forecast for Store {selected_store}')
+                ax.setTitle(f'ARIMA Forecast for Store {selected_store}')
                 ax.legend()
                 ax.grid(True)
                 plt.tight_layout()
