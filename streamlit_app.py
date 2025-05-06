@@ -674,7 +674,7 @@ elif selected_page == "ARIMA Forecasting":
                 
                 ax.set_xlabel('Date')
                 ax.set_ylabel('Sales')
-                ax.setTitle(f'ARIMA Forecast for Store {selected_store}')
+                ax.set_title(f'ARIMA Forecast for Store {selected_store}')
                 ax.legend()
                 ax.grid(True)
                 plt.tight_layout()
