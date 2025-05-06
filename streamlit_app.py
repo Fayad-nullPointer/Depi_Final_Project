@@ -49,14 +49,13 @@ def find_data_file():
     return None, None
 
 # Function to process data from file - only contains data processing, no widgets
-@st.cache_data
+# @st.cache_data
 def process_data_from_file(file_content):
     df = file_content.copy()
     df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
     return df
 
 # Function to create sample data for demo - only contains data generation, no widgets
-@st.cache_data
 def create_sample_data():
     dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
     stores = np.random.randint(1, 11, size=100)
@@ -94,20 +93,22 @@ else:
         help="Upload the Rossmann Stores Data CSV file"
     )
     
+    use_sample_data = st.sidebar.button("Use sample data (for demo only)")
+
     if uploaded_file is not None:
         try:
-            # Read the file first, then pass it to the cached function
+            # Read the file first, then pass it to the processing function
             file_content = pd.read_csv(uploaded_file)
             df = process_data_from_file(file_content)
-            
+
             # Basic validation of required columns
             required_columns = ['Date', 'Store', 'Sales']
             missing_columns = [col for col in required_columns if col not in df.columns]
-            
+
             if missing_columns:
                 st.sidebar.error(f"❌ Missing required columns: {', '.join(missing_columns)}")
                 st.stop()
-            
+
             # Option to save file for future use
             if st.sidebar.checkbox("Save file for future use", value=True):
                 try:
@@ -115,21 +116,18 @@ else:
                     st.sidebar.success("✅ File saved for future use")
                 except Exception as e:
                     st.sidebar.warning(f"⚠️ Could not save file: {str(e)}")
-            
+
             st.sidebar.success("✅ Data loaded successfully")
         except Exception as e:
             st.sidebar.error(f"❌ Error loading data: {str(e)}")
             st.stop()
+    elif use_sample_data:
+        df = create_sample_data()
+        st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
     else:
-        # Sample data option for demonstration - NOT inside a cached function
-        use_sample_data = st.sidebar.button("Use sample data (for demo only)")
-        if use_sample_data:
-            df = create_sample_data()
-            st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
-        else:
-            st.error("❌ Please upload the Rossmann Stores dataset to continue")
-            st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
-            st.stop()
+        st.error("❌ Please upload the Rossmann Stores dataset to continue")
+        st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
+        st.stop()
 
 # Check if we have data
 if df is None:
