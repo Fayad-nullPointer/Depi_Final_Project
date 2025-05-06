@@ -32,7 +32,7 @@ selected_page = st.sidebar.radio("Go to", pages)
 # Add data source section to the sidebar
 st.sidebar.header("📂 Data Source")
 
-# Function to check if file exists in any of the common locations
+# Function to check if file exists in any of the common locations - this is NOT cached
 def find_data_file():
     possible_paths = [
         "Rossmann Stores Data.csv",
@@ -48,14 +48,14 @@ def find_data_file():
                 continue
     return None, None
 
-# Function to load data from file
+# Function to process data from file - only contains data processing, no widgets
 @st.cache_data
-def load_data_from_file(file_path):
-    df = pd.read_csv(file_path)
+def process_data_from_file(file_content):
+    df = file_content.copy()
     df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
     return df
 
-# Function to create sample data for demo
+# Function to create sample data for demo - only contains data generation, no widgets
 @st.cache_data
 def create_sample_data():
     dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
@@ -75,17 +75,19 @@ def create_sample_data():
     df['Date'] = pd.to_datetime(df['Date'])
     return df
 
-# Try to find and load the dataset from common locations
-df, found_path = find_data_file()
+# Initialize df variable to avoid reference errors
+df = None
 
-# If data found, show success message
-if df is not None:
+# Try to find and load the dataset from common locations
+found_data, found_path = find_data_file()
+if found_data is not None:
     st.sidebar.success(f"✅ Data loaded from {found_path}")
+    df = process_data_from_file(found_data)
 else:
     # If data not found, offer upload option
     st.sidebar.info("📤 Please upload Rossmann Store Data")
     
-    # File uploader with drag and drop support
+    # File uploader with drag and drop support - NOT inside a cached function
     uploaded_file = st.sidebar.file_uploader(
         "Drag and drop CSV file here",
         type=["csv"],
@@ -94,7 +96,9 @@ else:
     
     if uploaded_file is not None:
         try:
-            df = load_data_from_file(uploaded_file)
+            # Read the file first, then pass it to the cached function
+            file_content = pd.read_csv(uploaded_file)
+            df = process_data_from_file(file_content)
             
             # Basic validation of required columns
             required_columns = ['Date', 'Store', 'Sales']
@@ -117,7 +121,7 @@ else:
             st.sidebar.error(f"❌ Error loading data: {str(e)}")
             st.stop()
     else:
-        # Sample data option for demonstration
+        # Sample data option for demonstration - NOT inside a cached function
         use_sample_data = st.sidebar.button("Use sample data (for demo only)")
         if use_sample_data:
             df = create_sample_data()
@@ -132,7 +136,7 @@ if df is None:
     st.error("❌ Could not load or generate data")
     st.stop()
 
-# Function for data preprocessing
+# Function for data preprocessing - only contains data processing, no widgets
 def preprocess_data(df):
     # Convert Date column to datetime
     df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
@@ -145,7 +149,7 @@ def preprocess_data(df):
 # Preprocess the data
 df_processed = preprocess_data(df)
 
-# Function to prepare data for TimesFM model
+# Function to prepare data for TimesFM model - only contains data processing, no widgets
 def prepare_timesfm_data(df):
     Dropped = ['Store', 'DayOfWeek', 'Customers', 'Open', 'Promo', 'StateHoliday', 'SchoolHoliday']
     new_df = df.drop(Dropped, axis=1)
