@@ -29,17 +29,11 @@ pages = ["Data Overview", "Exploratory Data Analysis", "Basic Time Series Analys
          "Time Series Forecasting with TimesFM", "LSTM Forecasting", "ARIMA Forecasting"]
 selected_page = st.sidebar.radio("Go to", pages)
 
-# Function to load data
-@st.cache_data
-def load_data():
-    # Add data source section to the sidebar
-    st.sidebar.header("📂 Data Source")
-    
-    # Try to load the dataset from common locations
-    data_found = False
-    df = None
-    
-    # Check if the file exists locally in common locations
+# Add data source section to the sidebar
+st.sidebar.header("📂 Data Source")
+
+# Function to check if file exists in any of the common locations
+def find_data_file():
     possible_paths = [
         "Rossmann Stores Data.csv",
         "data/Rossmann Stores Data.csv",
@@ -49,84 +43,93 @@ def load_data():
     for path in possible_paths:
         if os.path.exists(path):
             try:
-                df = pd.read_csv(path)
-                st.sidebar.success(f"✅ Data loaded from {path}")
-                data_found = True
-                break
+                return pd.read_csv(path), path
             except Exception:
                 continue
-    
-    # If data not found, offer upload option
-    if not data_found:
-        st.sidebar.info("📤 Please upload Rossmann Store Data")
-        
-        # File uploader with drag and drop support
-        uploaded_file = st.sidebar.file_uploader(
-            "Drag and drop CSV file here",
-            type=["csv"],
-            help="Upload the Rossmann Stores Data CSV file"
-        )
-        
-        if uploaded_file is not None:
-            try:
-                df = pd.read_csv(uploaded_file)
-                
-                # Basic validation of required columns
-                required_columns = ['Date', 'Store', 'Sales']
-                missing_columns = [col for col in required_columns if col not in df.columns]
-                
-                if missing_columns:
-                    st.sidebar.error(f"❌ Missing required columns: {', '.join(missing_columns)}")
-                    st.stop()
-                
-                # Option to save file for future use
-                if st.sidebar.checkbox("Save file for future use", value=True):
-                    try:
-                        df.to_csv("Rossmann Stores Data.csv", index=False)
-                        st.sidebar.success("✅ File saved for future use")
-                    except Exception as e:
-                        st.sidebar.warning(f"⚠️ Could not save file: {str(e)}")
-                
-                st.sidebar.success("✅ Data loaded successfully")
-            except Exception as e:
-                st.sidebar.error(f"❌ Error loading data: {str(e)}")
-                st.stop()
-        else:
-            # Sample data option for demonstration
-            if st.sidebar.button("Use sample data (for demo only)"):
-                # Create a small sample dataset
-                dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
-                stores = np.random.randint(1, 11, size=100)
-                sales = np.random.randint(2000, 15000, size=100)
-                
-                df = pd.DataFrame({
-                    'Date': dates,
-                    'Store': stores,
-                    'Sales': sales,
-                    'Customers': np.random.randint(100, 1000, size=100),
-                    'Open': 1,
-                    'Promo': np.random.randint(0, 2, size=100),
-                    'StateHoliday': 0,
-                    'SchoolHoliday': np.random.randint(0, 2, size=100)
-                })
-                
-                st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
-            else:
-                st.error("❌ Please upload the Rossmann Stores dataset to continue")
-                st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
-                st.stop()
-    
-    # Process the dataframe if we have data
-    if df is not None:
-        # Convert Date column to datetime
-        df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
-        return df
-    else:
-        st.error("❌ Could not load or generate data")
-        st.stop()
+    return None, None
 
-# Load the data
-df = load_data()
+# Function to load data from file
+@st.cache_data
+def load_data_from_file(file_path):
+    df = pd.read_csv(file_path)
+    df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
+    return df
+
+# Function to create sample data for demo
+@st.cache_data
+def create_sample_data():
+    dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
+    stores = np.random.randint(1, 11, size=100)
+    sales = np.random.randint(2000, 15000, size=100)
+    
+    df = pd.DataFrame({
+        'Date': dates,
+        'Store': stores,
+        'Sales': sales,
+        'Customers': np.random.randint(100, 1000, size=100),
+        'Open': 1,
+        'Promo': np.random.randint(0, 2, size=100),
+        'StateHoliday': 0,
+        'SchoolHoliday': np.random.randint(0, 2, size=100)
+    })
+    df['Date'] = pd.to_datetime(df['Date'])
+    return df
+
+# Try to find and load the dataset from common locations
+df, found_path = find_data_file()
+
+# If data found, show success message
+if df is not None:
+    st.sidebar.success(f"✅ Data loaded from {found_path}")
+else:
+    # If data not found, offer upload option
+    st.sidebar.info("📤 Please upload Rossmann Store Data")
+    
+    # File uploader with drag and drop support
+    uploaded_file = st.sidebar.file_uploader(
+        "Drag and drop CSV file here",
+        type=["csv"],
+        help="Upload the Rossmann Stores Data CSV file"
+    )
+    
+    if uploaded_file is not None:
+        try:
+            df = load_data_from_file(uploaded_file)
+            
+            # Basic validation of required columns
+            required_columns = ['Date', 'Store', 'Sales']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                st.sidebar.error(f"❌ Missing required columns: {', '.join(missing_columns)}")
+                st.stop()
+            
+            # Option to save file for future use
+            if st.sidebar.checkbox("Save file for future use", value=True):
+                try:
+                    df.to_csv("Rossmann Stores Data.csv", index=False)
+                    st.sidebar.success("✅ File saved for future use")
+                except Exception as e:
+                    st.sidebar.warning(f"⚠️ Could not save file: {str(e)}")
+            
+            st.sidebar.success("✅ Data loaded successfully")
+        except Exception as e:
+            st.sidebar.error(f"❌ Error loading data: {str(e)}")
+            st.stop()
+    else:
+        # Sample data option for demonstration
+        if st.sidebar.button("Use sample data (for demo only)"):
+            df = create_sample_data()
+            st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
+        else:
+            st.error("❌ Please upload the Rossmann Stores dataset to continue")
+            st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
+            st.stop()
+
+# Check if we have data
+if df is None:
+    st.error("❌ Could not load or generate data")
+    st.stop()
 
 # Function for data preprocessing
 def preprocess_data(df):
