@@ -49,14 +49,14 @@ def find_data_file():
     return None, None
 
 # Function to process data from file - only contains data processing, no widgets
-#@st.cache_data
+@st.cache_data
 def process_data_from_file(file_content):
     df = file_content.copy()
     df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
     return df
 
 # Function to create sample data for demo - only contains data generation, no widgets
-#@st.cache_data
+@st.cache_data
 def create_sample_data():
     dates = pd.date_range(start='2023-01-01', periods=100, freq='D')
     stores = np.random.randint(1, 11, size=100)
