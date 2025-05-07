@@ -75,30 +75,28 @@ def create_sample_data():
     df['Date'] = pd.to_datetime(df['Date'])
     return df
 
-# Initialize df variable to avoid reference errors
-df = None
+# Centralize data upload logic to ensure data is uploaded only once
+# Function to handle data upload and processing
+@st.cache_data
+def load_data():
+    # Try to find and load the dataset from common locations
+    found_data, found_path = find_data_file()
+    if found_data is not None:
+        st.sidebar.success(f"✅ Data loaded from {found_path}")
+        return process_data_from_file(found_data)
 
-# Try to find and load the dataset from common locations
-found_data, found_path = find_data_file()
-if found_data is not None:
-    st.sidebar.success(f"✅ Data loaded from {found_path}")
-    df = process_data_from_file(found_data)
-else:
     # If data not found, offer upload option
     st.sidebar.info("📤 Please upload Rossmann Store Data")
-    
-    # File uploader with drag and drop support - NOT inside a cached function
     uploaded_file = st.sidebar.file_uploader(
         "Drag and drop CSV file here",
         type=["csv"],
         help="Upload the Rossmann Stores Data CSV file"
     )
-    
+
     use_sample_data = st.sidebar.button("Use sample data (for demo only)")
 
     if uploaded_file is not None:
         try:
-            # Read the file first, then pass it to the processing function
             file_content = pd.read_csv(uploaded_file)
             df = process_data_from_file(file_content)
 
@@ -119,16 +117,20 @@ else:
                     st.sidebar.warning(f"⚠️ Could not save file: {str(e)}")
 
             st.sidebar.success("✅ Data loaded successfully")
+            return df
         except Exception as e:
             st.sidebar.error(f"❌ Error loading data: {str(e)}")
             st.stop()
     elif use_sample_data:
-        df = create_sample_data()
         st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
+        return create_sample_data()
     else:
         st.error("❌ Please upload the Rossmann Stores dataset to continue")
         st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
         st.stop()
+
+# Load data once
+df = load_data()
 
 # Check if we have data
 if df is None:
