@@ -289,14 +289,14 @@ elif selected_page == "Exploratory Data Analysis":
 elif selected_page == "Basic Time Series Analysis":
     st.header("Basic Time Series Analysis")
     
-    # Filter options
+    # Add store selection to Basic Time Series Analysis
     st.sidebar.subheader("Filter Options")
     store_options = sorted(df['Store'].unique().tolist())
     selected_store = st.sidebar.selectbox("Select Store", store_options)
-    
+
     # Filter data for selected store
     store_data = df[df['Store'] == selected_store]
-    
+
     # Aggregate daily sales for the store
     daily_sales = store_data.groupby('Date')['Sales'].sum().reset_index()
     daily_sales = daily_sales.sort_values('Date')
@@ -686,6 +686,10 @@ elif selected_page == "ARIMA Forecasting":
                     'Date': forecast.index,
                     'Forecasted Sales': forecast.values
                 })
+                st.dataframe(forecast_df)
+                
+                # Add forecasted values display in ARIMA Forecasting section
+                st.subheader("Forecasted Sales Amounts")
                 st.dataframe(forecast_df)
                 
         except Exception as e:
