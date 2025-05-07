@@ -49,11 +49,14 @@ def find_data_file():
                 continue
     return None, None
 
+# Updated process_data_from_file to handle NaT values
 # Function to process data from file - only contains data processing, no widgets
 # @st.cache_data
 def process_data_from_file(file_content):
     df = file_content.copy()
     df['Date'] = pd.to_datetime(df['Date'], format='mixed', dayfirst=True, errors='coerce')
+    # Drop rows with invalid dates
+    df = df.dropna(subset=['Date'])
     return df
 
 # Function to create sample data for demo - only contains data generation, no widgets
@@ -76,7 +79,7 @@ def create_sample_data():
     return df
 
 # Centralize data upload logic to ensure data is uploaded only once
-# Function to handle data upload and processing
+# Updated load_data to ensure compatibility with PyArrow
 @st.cache_data
 def load_data():
     # Try to find and load the dataset from common locations
@@ -445,7 +448,7 @@ elif selected_page == "Time Series Forecasting with TimesFM":
             
             ax.set_xlabel('Date')
             ax.set_ylabel('Sales')
-            ax.set_title(f'TimesFM Forecast for Store {selected_store}')
+            ax.setTitle(f'TimesFM Forecast for Store {selected_store}')
             ax.legend()
             ax.grid(True)
             plt.tight_layout()
