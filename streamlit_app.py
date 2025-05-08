@@ -108,7 +108,6 @@ def load_data():
         st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
         st.stop()
 
-@st.cache_data
 def handle_uploaded_file(uploaded_file):
     try:
         file_content = pd.read_csv(uploaded_file)
