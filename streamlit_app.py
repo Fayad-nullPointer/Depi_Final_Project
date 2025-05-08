@@ -79,8 +79,8 @@ def create_sample_data():
     return df
 
 # Centralize data upload logic to ensure data is uploaded only once
-# Updated load_data to ensure compatibility with PyArrow
-@st.cache_data
+# Updated load_data to separate widget commands from cached logic
+
 def load_data():
     # Try to find and load the dataset from common locations
     found_data, found_path = find_data_file()
@@ -99,37 +99,41 @@ def load_data():
     use_sample_data = st.sidebar.button("Use sample data (for demo only)")
 
     if uploaded_file is not None:
-        try:
-            file_content = pd.read_csv(uploaded_file)
-            df = process_data_from_file(file_content)
-
-            # Basic validation of required columns
-            required_columns = ['Date', 'Store', 'Sales']
-            missing_columns = [col for col in required_columns if col not in df.columns]
-
-            if missing_columns:
-                st.sidebar.error(f"❌ Missing required columns: {', '.join(missing_columns)}")
-                st.stop()
-
-            # Option to save file for future use
-            if st.sidebar.checkbox("Save file for future use", value=True):
-                try:
-                    df.to_csv("Rossmann Stores Data.csv", index=False)
-                    st.sidebar.success("✅ File saved for future use")
-                except Exception as e:
-                    st.sidebar.warning(f"⚠️ Could not save file: {str(e)}")
-
-            st.sidebar.success("✅ Data loaded successfully")
-            return df
-        except Exception as e:
-            st.sidebar.error(f"❌ Error loading data: {str(e)}")
-            st.stop()
+        return handle_uploaded_file(uploaded_file)
     elif use_sample_data:
         st.sidebar.warning("⚠️ Using sample data. For accurate analysis, upload the actual dataset.")
         return create_sample_data()
     else:
         st.error("❌ Please upload the Rossmann Stores dataset to continue")
         st.info("You can drag and drop the CSV file in the sidebar or use the sample data option")
+        st.stop()
+
+@st.cache_data
+def handle_uploaded_file(uploaded_file):
+    try:
+        file_content = pd.read_csv(uploaded_file)
+        df = process_data_from_file(file_content)
+
+        # Basic validation of required columns
+        required_columns = ['Date', 'Store', 'Sales']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+
+        if missing_columns:
+            st.sidebar.error(f"❌ Missing required columns: {', '.join(missing_columns)}")
+            st.stop()
+
+        # Option to save file for future use
+        if st.sidebar.checkbox("Save file for future use", value=True):
+            try:
+                df.to_csv("Rossmann Stores Data.csv", index=False)
+                st.sidebar.success("✅ File saved for future use")
+            except Exception as e:
+                st.sidebar.warning(f"⚠️ Could not save file: {str(e)}")
+
+        st.sidebar.success("✅ Data loaded successfully")
+        return df
+    except Exception as e:
+        st.sidebar.error(f"❌ Error loading data: {str(e)}")
         st.stop()
 
 # Load data once
