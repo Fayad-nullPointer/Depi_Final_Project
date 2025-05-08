@@ -451,7 +451,7 @@ elif selected_page == "Time Series Forecasting with TimesFM":
             
             ax.set_xlabel('Date')
             ax.set_ylabel('Sales')
-            ax.setTitle(f'TimesFM Forecast for Store {selected_store}')
+            ax.set_title(f'TimesFM Forecast for Store {selected_store}')
             ax.legend()
             ax.grid(True)
             plt.tight_layout()
