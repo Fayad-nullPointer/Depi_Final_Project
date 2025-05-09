@@ -1,6 +1,5 @@
-jax[cpu]>=0.4.1
 torch==2.7.0
-git+https://github.com/google-research/timesfm.git
+timesfm
 numpy>=1.22.0
 pandas>=2.0.0
 matplotlib>=3.5.1
