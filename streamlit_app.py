@@ -316,7 +316,7 @@ elif selected_page == "Basic Time Series Analysis":
     ax.plot(daily_sales['Date'], daily_sales['Sales'])
     ax.set_xlabel("Date")
     ax.set_ylabel("Sales")
-    ax.set_title(f"Daily Sales for Store {selected_store}")
+    ax.setTitle(f"Daily Sales for Store {selected_store}")
     ax.grid(True)
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -476,124 +476,47 @@ elif selected_page == "LSTM Forecasting":
     
     if run_lstm:
         try:
-            import tensorflow as tf
-            from tensorflow.keras.models import Sequential
-            from tensorflow.keras.layers import LSTM, Dense
-            
-            # Store selection
-            store_options = sorted(df['Store'].unique().tolist())
-            selected_store = st.selectbox("Select Store", store_options)
-            
-            # Filter data for selected store
-            store_data = df[df['Store'] == selected_store]
-            
-            # Prepare time series data
-            store_ts = store_data.sort_values('Date').set_index('Date')['Sales']
-            
-            # Parameters for LSTM
-            st.subheader("LSTM Parameters")
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                seq_length = st.slider("Sequence Length", 5, 50, 30)
-            with col2:
-                test_size = st.slider("Test Size (%)", 10, 50, 20)
-            with col3:
-                epochs = st.slider("Training Epochs", 5, 50, 20)
-            
-            # Convert to numpy array and normalize
-            sales_data = store_ts.values.reshape(-1, 1)
-            
-            # Normalize data
-            scaler = MinMaxScaler()
-            scaled_sales = scaler.fit_transform(sales_data)
-            
-            # Create sequences for LSTM
-            def create_sequences(data, seq_length):
-                X, y = [], []
-                for i in range(len(data) - seq_length):
-                    X.append(data[i:i+seq_length])
-                    y.append(data[i+seq_length])
-                return np.array(X), np.array(y)
-            
-            # Create sequences
-            X, y = create_sequences(scaled_sales, seq_length)
-            X = X.reshape((X.shape[0], seq_length, 1))
-            
-            # Split data
-            split_idx = int(X.shape[0] * (1 - test_size/100))
-            X_train, X_test = X[:split_idx], X[split_idx:]
-            y_train, y_test = y[:split_idx], y[split_idx:]
-            
-            # Build LSTM model
-            model = Sequential()
-            model.add(LSTM(64, activation='relu', input_shape=(seq_length, 1)))
-            model.add(Dense(1))
-            model.compile(optimizer='adam', loss='mse')
-            
-            # Train model
-            with st.spinner(f"Training LSTM model for {epochs} epochs..."):
-                model.fit(X_train, y_train, epochs=epochs, batch_size=32, verbose=0)
-            
-            # Make predictions
-            train_pred = model.predict(X_train)
-            test_pred = model.predict(X_test)
-            
-            # Inverse transform to get actual values
-            train_pred_rescaled = scaler.inverse_transform(train_pred)
-            test_pred_rescaled = scaler.inverse_transform(test_pred)
-            y_train_rescaled = scaler.inverse_transform(y_train)
-            y_test_rescaled = scaler.inverse_transform(y_test)
-            
-            # Calculate metrics
-            train_mae = mean_absolute_error(y_train_rescaled, train_pred_rescaled)
-            train_rmse = np.sqrt(mean_squared_error(y_train_rescaled, train_pred_rescaled))
-            test_mae = mean_absolute_error(y_test_rescaled, test_pred_rescaled)
-            test_rmse = np.sqrt(mean_squared_error(y_test_rescaled, test_pred_rescaled))
-            
-            # Display metrics
-            st.subheader("Model Performance")
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Training MAE", f"{train_mae:.2f}")
-                st.metric("Training RMSE", f"{train_rmse:.2f}")
-            with col2:
-                st.metric("Testing MAE", f"{test_mae:.2f}")
-                st.metric("Testing RMSE", f"{test_rmse:.2f}")
-            
-            # Forecast next day
-            last_seq = scaled_sales[-seq_length:]
-            last_seq = last_seq.reshape((1, seq_length, 1))
-            predicted_scaled = model.predict(last_seq)
-            predicted_value = scaler.inverse_transform(predicted_scaled)
-            
-            st.subheader("Next Day Forecast")
-            st.metric("Predicted Sales", f"€{predicted_value[0][0]:.2f}")
-            
-            # Plot results
-            # Combine indices
-            train_idx = store_ts.index[seq_length:seq_length+len(train_pred)]
-            test_idx = store_ts.index[seq_length+len(train_pred):seq_length+len(train_pred)+len(test_pred)]
-            
-            fig, ax = plt.subplots(figsize=(12, 6))
-            ax.plot(train_idx, y_train_rescaled, label='Training Actual')
-            ax.plot(train_idx, train_pred_rescaled, label='Training Predictions')
-            ax.plot(test_idx, y_test_rescaled, label='Testing Actual')
-            ax.plot(test_idx, test_pred_rescaled, label='Testing Predictions')
-            
-            ax.set_xlabel('Date')
-            ax.set_ylabel('Sales')
-            ax.set_title(f'LSTM Model - Store {selected_store}')
-            ax.legend()
-            ax.grid(True)
-            plt.tight_layout()
-            st.pyplot(fig)
-            
+            from tensorflow.keras.models import load_model
         except ImportError:
-            st.error("TensorFlow is not installed. Please run: pip install tensorflow")
-    else:
-        st.info("Select the checkbox to run LSTM model")
+            st.error("TensorFlow package is not installed. Please run: pip install tensorflow")
+            st.stop()
+
+        try:
+            model = load_model("model2.h5")
+        except Exception as e:
+            st.error(f"Error loading model: {e}")
+            st.stop()
+
+        # ------------------- تحديد خصائص البيانات -------------------
+        features = ["Store", "DayOfWeek", "Promo", "SchoolHoliday", "Month"]
+        target = "Sales"
+
+        # ------------------- واجهة المستخدم (اختيار المتجر) -------------------
+        store_df = st.slider("Select Store ID", 1, 1115, 1)
+        store_data = df[df['Store'] == store_df]
+
+        # ------------------- تحجيم البيانات -------------------
+        scaler_sales = MinMaxScaler()
+        store_data["SalesScaled"] = scaler_sales.fit_transform(store_data[[target]])
+
+        # تحجيم باقي الخصائص (features)
+        scaler_features = MinMaxScaler()
+        store_data[features] = scaler_features.fit_transform(store_data[features])
+
+        # ------------------- تحضير البيانات للتنبؤ -------------------
+        seq_length = 30  # طول التسلسل الذي سنستخدمه للنموذج
+
+        # تجهيز البيانات السابقة للتنبؤ باليوم التالي (نستخدم كل الخصائص مع Sales)
+        last_seq = store_data[features + [target]].iloc[-seq_length:]
+        last_seq = last_seq.values.reshape((1, seq_length, len(features) + 1))  # إضافه SalesScaled كخاصية
+
+        # ------------------- التنبؤ بالمبيعات -------------------
+        predicted_scaled = model.predict(last_seq)
+        predicted_value = scaler_sales.inverse_transform(predicted_scaled)
+
+        # ------------------- عرض النتائج -------------------
+        st.subheader("Predicted Sales for Next Day")
+        st.write(f"Predicted Sales: €{predicted_value[0][0]:,.2f}")
 
 # ======== ARIMA Forecasting =========
 elif selected_page == "ARIMA Forecasting":
