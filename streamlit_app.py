@@ -477,6 +477,7 @@ elif selected_page == "LSTM Forecasting":
     if run_lstm:
         try:
             from tensorflow.keras.models import load_model
+            from tensorflow.keras.metrics import MeanSquaredError as mse
         except ImportError:
             st.error("TensorFlow package is not installed. Please run: pip install tensorflow")
             st.stop()
