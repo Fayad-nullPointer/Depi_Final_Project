@@ -316,7 +316,7 @@ elif selected_page == "Basic Time Series Analysis":
     ax.plot(daily_sales['Date'], daily_sales['Sales'])
     ax.set_xlabel("Date")
     ax.set_ylabel("Sales")
-    ax.setTitle(f"Daily Sales for Store {selected_store}")
+    ax.set_title(f"Daily Sales for Store {selected_store}")
     ax.grid(True)
     plt.xticks(rotation=45)
     plt.tight_layout()
