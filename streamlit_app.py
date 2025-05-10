@@ -492,29 +492,32 @@ elif selected_page == "LSTM Forecasting":
         target = "Sales"
 
         # ------------------- واجهة المستخدم (اختيار المتجر) -------------------
-        store_df = st.slider("Select Store ID", 1, 1115, 1)
-        store_data = df[df['Store'] == store_df]
+        # Use unique store IDs for the slider
+        store_ids = sorted(df['Store'].unique())
+        store_df = st.slider("Select Store ID", int(store_ids[0]), int(store_ids[-1]), int(store_ids[0]))
+        store_data = df[df['Store'] == store_df].copy()
 
-        # ------------------- تحجيم البيانات -------------------
+        # Check if enough data for sequence
+        seq_length = 30
+        if len(store_data) < seq_length:
+            st.error(f"Not enough data for Store {store_df} to make a prediction (need at least {seq_length} days).")
+            st.stop()
+
+        # Scaling
         scaler_sales = MinMaxScaler()
         store_data["SalesScaled"] = scaler_sales.fit_transform(store_data[[target]])
-
-        # تحجيم باقي الخصائص (features)
         scaler_features = MinMaxScaler()
         store_data[features] = scaler_features.fit_transform(store_data[features])
 
-        # ------------------- تحضير البيانات للتنبؤ -------------------
-        seq_length = 30  # طول التسلسل الذي سنستخدمه للنموذج
+        # Prepare input for LSTM: use scaled features and SalesScaled
+        input_cols = features + ["SalesScaled"]
+        last_seq = store_data[input_cols].iloc[-seq_length:]
+        last_seq = last_seq.values.reshape((1, seq_length, len(input_cols)))
 
-        # تجهيز البيانات السابقة للتنبؤ باليوم التالي (نستخدم كل الخصائص مع Sales)
-        last_seq = store_data[features + [target]].iloc[-seq_length:]
-        last_seq = last_seq.values.reshape((1, seq_length, len(features) + 1))  # إضافه SalesScaled كخاصية
-
-        # ------------------- التنبؤ بالمبيعات -------------------
+        # Predict
         predicted_scaled = model.predict(last_seq)
         predicted_value = scaler_sales.inverse_transform(predicted_scaled)
 
-        # ------------------- عرض النتائج -------------------
         st.subheader("Predicted Sales for Next Day")
         st.write(f"Predicted Sales: €{predicted_value[0][0]:,.2f}")
 
