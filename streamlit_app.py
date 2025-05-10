@@ -510,10 +510,9 @@ elif selected_page == "LSTM Forecasting":
         scaler_features = MinMaxScaler()
         store_data[features] = scaler_features.fit_transform(store_data[features])
 
-        # Prepare input for LSTM: use scaled features and SalesScaled
-        input_cols = features + ["SalesScaled"]
-        last_seq = store_data[input_cols].iloc[-seq_length:]
-        last_seq = last_seq.values.reshape((1, seq_length, len(input_cols)))
+        # Prepare input for LSTM: use only the features (as in training)
+        last_seq = store_data[features].iloc[-seq_length:]
+        last_seq = last_seq.values.reshape((1, seq_length, len(features)))
 
         # Predict
         predicted_scaled = model.predict(last_seq)
