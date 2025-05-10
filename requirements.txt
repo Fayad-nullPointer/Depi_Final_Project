@@ -7,5 +7,7 @@ scikit-learn
 statsmodels
 tensorflow
 plotly
-timesfm
+git+https://github.com/google-research/timesfm.git
 torch
+timesfm
+
