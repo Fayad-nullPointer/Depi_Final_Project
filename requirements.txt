@@ -1,4 +1,4 @@
-torch==2.7.0
+torch
 timesfm
 numpy>=1.22.0
 pandas>=2.0.0
