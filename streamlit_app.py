@@ -483,7 +483,7 @@ elif selected_page == "LSTM Forecasting":
             st.stop()
 
         try:
-            model = load_model("model2.h5")
+            model = load_model("model2.h5", compile=False)
         except Exception as e:
             st.error(f"Error loading model: {e}")
             st.stop()
