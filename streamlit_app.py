@@ -632,7 +632,7 @@ elif selected_page == "ARIMA Forecasting":
 
 # Add a footer with information
 st.markdown("---")
-st.markdown("© 2025 Store Sales Forecasting App | Created as a Final Project for DEPI BY Ahmed Fayad")
+st.markdown("© 2025 Store Sales Forecasting App | Created as a Final Project for DEPI BY Ahmed Fayad - Rafat - Gamal Kaled Aboelhamed")
 
 
 
