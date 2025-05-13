@@ -316,7 +316,7 @@ elif selected_page == "Basic Time Series Analysis":
     ax.plot(daily_sales['Date'], daily_sales['Sales'])
     ax.set_xlabel("Date")
     ax.set_ylabel("Sales")
-    ax.setTitle(f"Daily Sales for Store {selected_store}")
+    ax.setTitle(f"Daily Sales for Store {selected_store}")    
     ax.grid(True)
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -518,14 +518,16 @@ elif selected_page == "LSTM Forecasting":
         predicted_scaled = model.predict(last_seq)
         predicted_value = scaler_sales.inverse_transform(predicted_scaled)
 
-        # Calculate average sales for the selected store
+        # Calculate mean absolute error and rate error for LSTM
         avg_sales = df[df['Store'] == store_df]['Sales'].mean()
-        rate_error = predicted_value[0][0] / avg_sales if avg_sales != 0 else np.nan
+        mae = np.abs(predicted_value[0][0] - avg_sales)
+        rate_error = mae / predicted_value[0][0] if predicted_value[0][0] != 0 else np.nan
 
         st.subheader("Predicted Sales for Next Day")
         st.write(f"Predicted Sales: €{predicted_value[0][0]:,.2f}")
         st.write(f"Average Sales for Store {store_df}: €{avg_sales:,.2f}")
-        st.write(f"Rate Error (Predicted / Average): {rate_error:.2f}")
+        st.write(f"Mean Absolute Error: {mae:.2f}")
+        st.write(f"Rate Error (MAE / Predicted): {rate_error:.2f}")
 
 # ======== ARIMA Forecasting =========
 elif selected_page == "ARIMA Forecasting":
