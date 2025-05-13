@@ -316,7 +316,7 @@ elif selected_page == "Basic Time Series Analysis":
     ax.plot(daily_sales['Date'], daily_sales['Sales'])
     ax.set_xlabel("Date")
     ax.set_ylabel("Sales")
-    ax.set_title(f"Daily Sales for Store {selected_store}")
+    ax.setTitle(f"Daily Sales for Store {selected_store}")
     ax.grid(True)
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -518,8 +518,14 @@ elif selected_page == "LSTM Forecasting":
         predicted_scaled = model.predict(last_seq)
         predicted_value = scaler_sales.inverse_transform(predicted_scaled)
 
+        # Calculate average sales for the selected store
+        avg_sales = df[df['Store'] == store_df]['Sales'].mean()
+        rate_error = predicted_value[0][0] / avg_sales if avg_sales != 0 else np.nan
+
         st.subheader("Predicted Sales for Next Day")
         st.write(f"Predicted Sales: €{predicted_value[0][0]:,.2f}")
+        st.write(f"Average Sales for Store {store_df}: €{avg_sales:,.2f}")
+        st.write(f"Rate Error (Predicted / Average): {rate_error:.2f}")
 
 # ======== ARIMA Forecasting =========
 elif selected_page == "ARIMA Forecasting":
@@ -625,6 +631,16 @@ elif selected_page == "ARIMA Forecasting":
                 # Add forecasted values display in ARIMA Forecasting section
                 st.subheader("Forecasted Sales Amounts")
                 st.dataframe(forecast_df)
+
+                # Calculate and display rate error for ARIMA
+                avg_sales = df[df['Store'] == selected_store]['Sales'].mean()
+                if len(forecast_df) > 0:
+                    forecasted_value = forecast_df['Forecasted Sales'].iloc[0]
+                    rate_error = forecasted_value / avg_sales if avg_sales != 0 else np.nan
+                    st.write(f"Average Sales for Store {selected_store}: €{avg_sales:,.2f}")
+                    st.write(f"Rate Error (Forecasted / Average): {rate_error:.2f}")
+                else:
+                    st.write("No forecasted value to calculate rate error.")
                 
         except Exception as e:
             st.error(f"Error fitting ARIMA model: {e}")
