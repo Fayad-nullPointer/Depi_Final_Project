@@ -637,10 +637,19 @@ elif selected_page == "ARIMA Forecasting":
                 # Calculate and display rate error for ARIMA
                 avg_sales = df[df['Store'] == selected_store]['Sales'].mean()
                 if len(forecast_df) > 0:
-                    forecasted_value = forecast_df['Forecasted Sales'].iloc[0]
-                    rate_error = forecasted_value / avg_sales if avg_sales != 0 else np.nan
-                    st.write(f"Average Sales for Store {selected_store}: €{avg_sales:,.2f}")
-                    st.write(f"Rate Error (Forecasted / Average): {rate_error:.2f}")
+                    # Calculate MAE between forecast and actuals if available
+                    # Try to get actuals for the forecast period
+                    actuals = df[(df['Store'] == selected_store) & (df['Date'].isin(forecast_df['Date']))]['Sales'].values
+                    forecasted_values = forecast_df['Forecasted Sales'].values
+                    if len(actuals) == len(forecasted_values) and len(actuals) > 0:
+                        mae = mean_absolute_error(actuals, forecasted_values)
+                        rate_error = mae / avg_sales if avg_sales != 0 else np.nan
+                        st.write(f"Average Sales for Store {selected_store}: €{avg_sales:,.2f}")
+                        st.write(f"Mean Absolute Error (MAE): {mae:.2f}")
+                        st.write(f"Rate Error (MAE / Average Sales): {rate_error:.2f}")
+                    else:
+                        st.write(f"Average Sales for Store {selected_store}: €{avg_sales:,.2f}")
+                        st.write("Not enough actual data for the forecast period to calculate MAE and rate error.")
                 else:
                     st.write("No forecasted value to calculate rate error.")
                 
